@@ -65,15 +65,24 @@ public class ProductServiceImpl implements GeneralService<Product> {
         return null;
     }
 
-    public List<Product> findByName(String name){
-        List<Product> list = new ArrayList<>();
-        List<Product> products = findAll();
-        for (Product p : products) {
-            if (p.getName().contains(name)) {
-                list.add(p);
+    public List<Product> findByName(String searchName) {
+        List<Product> products = new ArrayList<>();
+        try (Connection connection = getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM product WHERE name like ?")
+        ) {
+            preparedStatement.setString(1, "%" + searchName + "%");
+            ResultSet rs = preparedStatement.executeQuery();
+            while (rs.next()) {
+                int id = rs.getInt("id");
+                String name = rs.getString("name");
+                int price = rs.getInt("price");
+                int quantity = rs.getInt("quantity");
+                products.add(new Product(id, name, price, quantity));
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        return list;
+        return products;
     }
 
     public List<Product> findByPrice(int begin, int end){
